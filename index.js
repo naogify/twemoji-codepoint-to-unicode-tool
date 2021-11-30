@@ -6,27 +6,40 @@ const twemoji = require('twemoji');
 const DomParser = require('dom-parser');
 const parser = new DomParser();
 
-// const srcPath = '/Users/naoppy/naogify/twemoji-sprites/icons'
+const convertToEmoji = (utf16) => {
 
-// const svgs = glob.sync(path.join(srcPath, `*.svg`))
-//   .map(function (f) {
+  const emojiRaw = twemoji.parse(utf16)
+  const dom = parser.parseFromString(emojiRaw);
+  const emojiElements = dom.getElementsByClassName('emoji')
 
-//     const fileName = f.replace(`${srcPath}/`, '')
-//     console.log(fileName)
+  let emoji
+  if (emojiElements.length) {
+    emoji = emojiElements[0].getAttribute('alt')
+  } else {
+    emoji = emojiRaw
+  }
 
-//     // const utf16 = twemoji.convert.fromCodePoint('1f004');
-//     // const emojiRaw = twemoji.parse(utf16)
-//     // const dom = parser.parseFromString(emojiRaw);
-//     // const fileName = dom.getElementsByClassName('emoji')[0].getAttribute('alt')
-    
-//     // fs.renameSync('./aaa.txt', `${fileName}.txt`)
-//   });
+  return emoji
+}
 
+const srcPath = '/Users/naoppy/naogify/twemoji-sprites/icons'
 
-const utf16 = twemoji.convert.fromCodePoint('1f1e6-1f1e8');
-console.log(utf16)
-const emojiRaw = twemoji.parse(utf16)
-const dom = parser.parseFromString(emojiRaw);
-const fileName = dom.getElementsByClassName('emoji')[0].getAttribute('alt')
+glob.sync(path.join(srcPath, `*.svg`))
+  .map(function (f) {
 
-fs.renameSync('./aaa.txt', `${fileName}.txt`)
+    let fileName = f.replace(`${srcPath}/`, '')
+    fileName = fileName.replace('.svg', '')
+
+    const codePointList = fileName.split('-')
+
+    let utf16 = ''
+    for (let i = 0; i < codePointList.length; i++) {
+      const codePoint = codePointList[i];
+      utf16 = utf16 + twemoji.convert.fromCodePoint(codePoint)
+    }
+
+    const emoji = convertToEmoji(utf16)
+    const outputPath = f.replace(fileName, emoji)
+
+    fs.renameSync(f, outputPath)
+  });
